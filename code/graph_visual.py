@@ -3,29 +3,24 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 
-# --- Load CSVs ---
+# --- Load CSV files ---
 drug_protein_df = pd.read_csv("csv/short_bio-decagon-targets-all.csv")
-protein_protein_df = pd.read_csv("csv/short_protein.csv")
+protein_protein_df = pd.read_csv("csv/bio-decagon-ppi.csv")
+drug_combo_df = pd.read_csv("csv/bio-decagon-combo.csv")  # The third CSV
 
-# --- Find sets of proteins ---
-proteins_in_drug_links = set(drug_protein_df["Gene"])
+# --- Identify proteins linked to both drugs AND other proteins ---
+proteins_in_drug_links = set(drug_protein_df["STITCH"])
 proteins_in_protein_links = set(protein_protein_df["Gene 1"]) | set(protein_protein_df["Gene 2"])
-
-# Keep only proteins that appear in BOTH sets
 proteins_to_keep = proteins_in_drug_links & proteins_in_protein_links
 
-print(f"Proteins in drug links: {len(proteins_in_drug_links)}")
-print(f"Proteins in protein links: {len(proteins_in_protein_links)}")
-print(f"Proteins kept (drug + protein): {len(proteins_to_keep)}")
-
-# --- Filter data ---
+# Filter dataframes accordingly
 filtered_drug_protein_df = drug_protein_df[drug_protein_df["Gene"].isin(proteins_to_keep)]
 filtered_protein_protein_df = protein_protein_df[
     protein_protein_df["Gene 1"].isin(proteins_to_keep) &
     protein_protein_df["Gene 2"].isin(proteins_to_keep)
 ]
 
-# --- Build graph ---
+# --- Create the graph ---
 G = nx.Graph()
 
 # Add Drug–Protein edges
@@ -42,11 +37,20 @@ for _, row in filtered_protein_protein_df.iterrows():
     G.add_node(p2, mode="protein")
     G.add_edge(p1, p2, relation="protein-protein")
 
-# --- Separate node sets ---
+# --- Add Drug–Drug combination edges (in red) ---
+drug_nodes = {n for n, d in G.nodes(data=True) if d["mode"] == "drug"}
+
+for _, row in drug_combo_df.iterrows():
+    d1, d2 = row["STITCH 1"], row["STITCH 2"]
+    # Add edge only if both drugs are already in the graph
+    if d1 in drug_nodes and d2 in drug_nodes:
+        G.add_edge(d1, d2, relation="drug-drug")
+
+# --- Separate node sets again (after adding combos) ---
 drug_nodes = [n for n, d in G.nodes(data=True) if d["mode"] == "drug"]
 protein_nodes = [n for n, d in G.nodes(data=True) if d["mode"] == "protein"]
 
-# --- Define cloud layout ---
+# --- Define a "cloud" layout ---
 def cloud_positions(center_x, center_y, n_nodes, radius=2.0):
     angles = np.linspace(0, 2 * np.pi, n_nodes, endpoint=False)
     positions = {}
@@ -56,31 +60,34 @@ def cloud_positions(center_x, center_y, n_nodes, radius=2.0):
         positions[i] = (x, y)
     return positions
 
-# Generate cloud coordinates
+# Create two clouds: one for drugs (top), one for proteins (bottom)
 drug_pos = cloud_positions(0, 2, len(drug_nodes), radius=2)
 protein_pos = cloud_positions(0, -2, len(protein_nodes), radius=2.5)
 
-# Merge into a single position dictionary
 pos = {drug: drug_pos[i] for i, drug in enumerate(drug_nodes)}
 pos.update({protein: protein_pos[i] for i, protein in enumerate(protein_nodes)})
 
-# --- Draw the network ---
+# --- Draw ---
 plt.figure(figsize=(10, 8))
 
+# Nodes
 nx.draw_networkx_nodes(G, pos, nodelist=drug_nodes, node_color="skyblue", node_shape="s", label="Drugs", node_size=600)
 nx.draw_networkx_nodes(G, pos, nodelist=protein_nodes, node_color="lightgreen", node_shape="o", label="Proteins", node_size=400)
 
 # Edges
 drug_protein_edges = [(u, v) for u, v, d in G.edges(data=True) if d["relation"] == "drug-protein"]
 protein_protein_edges = [(u, v) for u, v, d in G.edges(data=True) if d["relation"] == "protein-protein"]
+drug_drug_edges = [(u, v) for u, v, d in G.edges(data=True) if d["relation"] == "drug-drug"]
 
 nx.draw_networkx_edges(G, pos, edgelist=drug_protein_edges, edge_color="gray", alpha=0.7)
 nx.draw_networkx_edges(G, pos, edgelist=protein_protein_edges, edge_color="orange", style="dashed", alpha=0.8)
+nx.draw_networkx_edges(G, pos, edgelist=drug_drug_edges, edge_color="red", width=2.0, style="solid")
 
+# Labels
 nx.draw_networkx_labels(G, pos, font_size=8)
 
-plt.title("Small Drug–Protein Network", fontsize=12)
-plt.legend(scatterpoints=1)
+plt.title("Drug–Protein–Protein–Combination Network", fontsize=12)
 plt.axis("off")
+plt.legend(scatterpoints=1)
 plt.tight_layout()
 plt.show()
