@@ -1,0 +1,6 @@
+Number of nodes: 19081
+Number of edges: 715612
+Density: 0.003931226877099142
+Average degree: 75.00780881505162
+Highest degree: 2519
+Clustering coefficient: 0.24597087743454596
