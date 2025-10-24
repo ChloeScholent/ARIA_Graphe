@@ -31,4 +31,3 @@ with open("csv/similar_drug_protein.csv", "w", newline='') as output_file:
 test = list(dict.fromkeys(test))
 print(len(test))
 print(len(drug_list))
-4543

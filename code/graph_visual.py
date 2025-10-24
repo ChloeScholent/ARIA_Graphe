@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # --- Load CSVs ---
-drug_protein_df = pd.read_csv("csv/bio-decagon-targets-all.csv")
+drug_protein_df = pd.read_csv("csv/short_bio-decagon-targets-all.csv")
 protein_protein_df = pd.read_csv("csv/short_protein.csv")
 
 # --- Find sets of proteins ---
@@ -79,7 +79,7 @@ nx.draw_networkx_edges(G, pos, edgelist=protein_protein_edges, edge_color="orang
 
 nx.draw_networkx_labels(G, pos, font_size=8)
 
-plt.title("Filtered Drug–Protein Network (Proteins linked to Drugs AND Proteins)", fontsize=12)
+plt.title("Small Drug–Protein Network", fontsize=12)
 plt.legend(scatterpoints=1)
 plt.axis("off")
 plt.tight_layout()

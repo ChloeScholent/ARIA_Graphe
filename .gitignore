@@ -420,4 +420,4 @@ FodyWeavers.xsd
 
 #Unwanted folders for local work
 csv/
-
+env/
