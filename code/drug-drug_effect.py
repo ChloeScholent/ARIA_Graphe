@@ -3,7 +3,7 @@ import numpy as np
 
 
 file_path = "csv/bio-decagon-combo.csv"
-file_path_protein = "csv/bio-decagon-targets.csv"
+file_path_protein = "csv/bio-decagon-targets-all.csv"
 x = 0
 drug_list = []
 test = []
@@ -24,10 +24,11 @@ with open("csv/similar_drug_protein.csv", "w", newline='') as output_file:
     writer = csv.writer(output_file)
 
     for row in drug_combo:
-        if row[0] in drug_list:
-            writer.writerow([row[0], row[1]])
-            test.append(row[0])
-    
+        for drug in drug_list:
+            if row[0] == drug:
+                writer.writerow([row[0], row[1]])
+                test.append(row[0])
+        
 test = list(dict.fromkeys(test))
 print(len(test))
 print(len(drug_list))
