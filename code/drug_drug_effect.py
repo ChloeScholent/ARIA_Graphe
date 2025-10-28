@@ -5,13 +5,16 @@ from pprint import pprint as print
 
 file_path = "csv/bio-decagon-combo.csv"
 file_path_protein = "csv/bio-decagon-targets-all.csv"
-x = 0
+
 drug_list = []
 drug_pair = []
+diff_drug_pair = []
+diff_drug_list = []
 test = []
 
 with open(file_path, newline='') as f:
     reader = csv.DictReader(f)
+    x = 0
     for row in reader:
             if row["Polypharmacy Side Effect"] == "C0006826" and x<30:
                 x+=1
@@ -34,7 +37,22 @@ with open("csv/similar_drug_protein.csv", "w", newline='') as output_file:
                 test.append(row[0])
         
 test = list(dict.fromkeys(test))
-print(len(test))
-print(len(drug_list))
-print(drug_pair)
-print(len(drug_pair))
+# print(len(test))
+# print(len(drug_list))
+# print(drug_pair)
+# print(len(drug_pair))
+
+with open(file_path, newline='') as f:
+    reader = csv.DictReader(f)
+    x = 0
+    for row in reader:
+            if x<30:
+                x+=1
+                diff_drug_list.append(row["STITCH 1"])
+                diff_drug_list.append(row["STITCH 2"])
+                pair = (row["STITCH 1"], row["STITCH 2"], row["Side Effect Name"])
+                diff_drug_pair.append(pair)
+
+diff_drug_list = list(dict.fromkeys(diff_drug_list))
+print(diff_drug_pair)
+print(len(diff_drug_list))
