@@ -33,7 +33,7 @@ with open(file_path, newline='') as f:
 drug_list = list(dict.fromkeys(drug_list))
 
 # print(len(drug_list))
-# print(drug_pair)
+print(drug_pair)
 # print(len(drug_pair))
 
 drug_combo = np.loadtxt(file_path_protein, delimiter=",", dtype=[('col1', '<U26'), ('col2', 'i4')], skiprows= 1)
@@ -48,7 +48,7 @@ with open("csv/similar_drug_protein.csv", "w", newline='') as output_file:
                 test.append(row[0])
         
 test = list(dict.fromkeys(test))
-# print(len(test))
+print(len(test))
 
 
 
