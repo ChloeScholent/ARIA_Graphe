@@ -1,0 +1,46 @@
+import csv
+import numpy as np
+from pprint import pprint as print
+import pandas as pd
+
+file_path = "csv/bio-decagon-combo.csv"
+file_path_protein = "csv/bio-decagon-targets-all.csv"
+diff_drug_path = "csv/bio-decagon-combo.csv"
+
+
+
+
+
+
+
+
+with open(file_path, newline='') as f:
+    reader = csv.DictReader(f)
+    x = 0
+    for row in reader:
+            if row["Polypharmacy Side Effect"] == "C0006826" and x<30:
+                x+=1
+                drug_list.append(row["STITCH 1"])
+                drug_list.append(row["STITCH 2"])
+                pair = {row["STITCH 1"], row["STITCH 2"]}
+                drug_pair.append(pair)
+
+drug_list = list(dict.fromkeys(drug_list))
+
+# print(len(drug_list))
+print(drug_pair)
+# print(len(drug_pair))
+
+drug_combo = np.loadtxt(file_path_protein, delimiter=",", dtype=[('col1', '<U26'), ('col2', 'i4')], skiprows= 1)
+
+with open("csv/similar_drug_protein.csv", "w", newline='') as output_file:
+    writer = csv.writer(output_file)
+
+    for row in drug_combo:
+        for drug in drug_list:
+            if row[0] == drug:
+                writer.writerow([row[0], row[1]])
+                test.append(row[0])
+        
+test = list(dict.fromkeys(test))
+print(len(test))
