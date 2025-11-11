@@ -76,31 +76,21 @@ for pair in filtered_pairs:
         G.add_edge(d1, d2, type='side-effect', effect='cancer')
 
 # ==============================
-# 5️⃣ Custom Layout: Drugs on Top, Proteins Below
+# 5️⃣ Default Layout
 # ==============================
 
-drug_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "drug"]
-protein_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "protein"]
-
-# Place drugs evenly spaced at y = +1
-x_drugs = range(len(drug_nodes))
-pos_drugs = {drug: (x, 1) for x, drug in zip(x_drugs, drug_nodes)}
-
-# Place proteins evenly spaced at y = -1
-x_proteins = range(len(protein_nodes))
-pos_proteins = {protein: (x, -1) for x, protein in zip(x_proteins, protein_nodes)}
-
-# Combine positions
-pos = {**pos_drugs, **pos_proteins}
-
-# Optionally apply small jitter to make edges clearer (optional)
-# pos = nx.spring_layout(G, pos=pos, fixed=pos.keys(), seed=42)
+# Use the default spring layout
+pos = nx.spring_layout(G, seed=42)
 
 # ==============================
 # 6️⃣ Visualization
 # ==============================
 
 plt.figure(figsize=(10, 6))
+
+# Separate node types
+drug_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "drug"]
+protein_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "protein"]
 
 # Draw nodes
 nx.draw_networkx_nodes(G, pos, nodelist=drug_nodes, node_color="lightcoral", node_shape="o", label="Drugs")

@@ -1,46 +1,63 @@
 import csv
 import numpy as np
-from pprint import pprint as print
-import pandas as pd
 
+# === File paths ===
 file_path = "csv/bio-decagon-combo.csv"
 file_path_protein = "csv/bio-decagon-targets-all.csv"
-diff_drug_path = "csv/bio-decagon-combo.csv"
 
+# === UMLS codes for target side effects ===
+FEVER_CODE = "C0018621"
+HYPERTENSION_CODE = "C0020542"
 
+# === Data structures ===
+pair_to_side_effects = {}
+drug_pair = []
+test = []
 
-
-
-
-
-
+# === STEP 1: Read all drug-side effect combinations ===
 with open(file_path, newline='') as f:
     reader = csv.DictReader(f)
-    x = 0
     for row in reader:
-            if row["Polypharmacy Side Effect"] == "C0006826" and x<30:
-                x+=1
-                drug_list.append(row["STITCH 1"])
-                drug_list.append(row["STITCH 2"])
-                pair = {row["STITCH 1"], row["STITCH 2"]}
-                drug_pair.append(pair)
+        pair = tuple(sorted([row["STITCH 1"], row["STITCH 2"]]))  # order-independent pair
+        side_effect = row["Polypharmacy Side Effect"]
 
-drug_list = list(dict.fromkeys(drug_list))
+        if pair not in pair_to_side_effects:
+            pair_to_side_effects[pair] = set()
+        pair_to_side_effects[pair].add(side_effect)
 
-# print(len(drug_list))
-print(drug_pair)
-# print(len(drug_pair))
+# === STEP 2: Select pairs that have BOTH fever & hypertension ===
+selected_pairs = [
+    pair for pair, effects in pair_to_side_effects.items()
+    if FEVER_CODE in effects and HYPERTENSION_CODE in effects
+]
 
-drug_combo = np.loadtxt(file_path_protein, delimiter=",", dtype=[('col1', '<U26'), ('col2', 'i4')], skiprows= 1)
+print(f"✅ Number of drug pairs with both fever and hypertension: {len(selected_pairs)}")
 
-with open("csv/similar_drug_protein.csv", "w", newline='') as output_file:
+# === STEP 3: Extract unique drugs involved in those pairs ===
+drug_list = sorted(set([drug for pair in selected_pairs for drug in pair]))
+
+print(f"✅ Number of unique drugs involved: {len(drug_list)}")
+
+# === STEP 4: Load protein associations ===
+drug_combo = np.loadtxt(
+    file_path_protein,
+    delimiter=",",
+    dtype=[('col1', '<U26'), ('col2', 'i4')],
+    skiprows=1
+)
+
+# === STEP 5: Write matching drugs and their proteins ===
+output_path = "csv/fever_hyperT_drug_protein.csv"
+
+with open(output_path, "w", newline='') as output_file:
     writer = csv.writer(output_file)
+    writer.writerow(["Drug", "Protein"])  # optional header
 
     for row in drug_combo:
-        for drug in drug_list:
-            if row[0] == drug:
-                writer.writerow([row[0], row[1]])
-                test.append(row[0])
-        
+        if row[0] in drug_list:
+            writer.writerow([row[0], row[1]])
+            test.append(row[0])
+
+# === STEP 6: Deduplicate and report ===
 test = list(dict.fromkeys(test))
-print(len(test))
+print(f"✅ Unique drugs written to {output_path}: {len(test)}")
