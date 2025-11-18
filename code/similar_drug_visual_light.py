@@ -1,8 +1,8 @@
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-from drug_drug_effect import drug_pair
 from pprint import pprint as print
+from extract_drug_drug_effect import drug_pair
 
 # ==============================
 # 1️⃣ Load Data
@@ -32,23 +32,36 @@ drugs_with_side_effects = {d for pair in filtered_pairs for d in pair}
 # Filter the drug–protein data to only include these drugs
 dpi_filtered = dpi[dpi["drug"].isin(drugs_with_side_effects)]
 
+# ==============================
+# 3️⃣ Remove proteins linked to only one drug
+# ==============================
+
+# Count how many unique drugs interact with each protein
+protein_counts = dpi_filtered.groupby("protein")["drug"].nunique()
+
+# Keep only proteins that have interactions with >= 2 drugs
+multi_drug_proteins = protein_counts[protein_counts >= 2].index
+
+# Filter the dataframe
+dpi_filtered = dpi_filtered[dpi_filtered["protein"].isin(multi_drug_proteins)]
+
 print(f"Original drug–drug pairs: {len(drug_side_effects)}")
 print(f"Valid pairs (both drugs in CSV): {len(filtered_pairs)}")
 print(f"Drugs with at least one side effect: {len(drugs_with_side_effects)}")
+print(f"Proteins with ≥ 2 drug interactions: {len(multi_drug_proteins)}")
 
 # ==============================
-# 3️⃣ Build Graph
+# 4️⃣ Build Graph
 # ==============================
 
 G = nx.Graph()
 
-# Add drug nodes (only those with side effects)
-for d in drugs_with_side_effects:
+# Add drug nodes (only those still connected after filtering)
+for d in set(dpi_filtered["drug"]):
     G.add_node(d, type='drug')
 
-# Add protein nodes connected to those drugs
-proteins = set(dpi_filtered["protein"])
-for p in proteins:
+# Add protein nodes (only those with ≥ 2 drug interactions)
+for p in multi_drug_proteins:
     G.add_node(p, type='protein')
 
 # Add drug–protein edges
@@ -58,18 +71,26 @@ for _, row in dpi_filtered.iterrows():
 # Add drug–drug side-effect edges
 for pair in filtered_pairs:
     d1, d2 = tuple(pair)
-    G.add_edge(d1, d2, type='side-effect', effect='cancer')
+    # Only add if both drugs are still in the graph
+    if d1 in G.nodes and d2 in G.nodes:
+        G.add_edge(d1, d2, type='side-effect', effect='cancer')
 
 # ==============================
-# 4️⃣ Visualization
+# 5️⃣ Default Layout
 # ==============================
+
+# Use the default spring layout
+pos = nx.spring_layout(G, seed=42)
+
+# ==============================
+# 6️⃣ Visualization
+# ==============================
+
+plt.figure(figsize=(10, 6))
 
 # Separate node types
 drug_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "drug"]
 protein_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "protein"]
-
-# Layout
-pos = nx.spring_layout(G, seed=42)
 
 # Draw nodes
 nx.draw_networkx_nodes(G, pos, nodelist=drug_nodes, node_color="lightcoral", node_shape="o", label="Drugs")
@@ -87,6 +108,7 @@ nx.draw_networkx_labels(G, pos, font_size=8)
 
 # Final touches
 plt.legend()
-plt.title("Drug–Drug Side Effects (Cancer) and Drug–Protein Interactions")
+plt.title("Drug–Drug Side Effects (Cancer) and Multi-Drug Protein Interactions")
 plt.axis("off")
+plt.tight_layout()
 plt.show()

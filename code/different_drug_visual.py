@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-from drug_drug_effect import diff_drug_pair
+from extract_drug_drug_effect import diff_drug_pair
 
 # Load drug–protein interactions
 dpi = pd.read_csv("csv/different_drug_protein.csv", header=None, names=["drug", "protein"])

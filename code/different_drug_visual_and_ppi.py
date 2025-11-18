@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-from drug_drug_effect import diff_drug_pair  # ✅ your list of sets for drug–drug pairs
+from extract_drug_drug_effect import diff_drug_pair  # ✅ your list of sets for drug–drug pairs
 
 # ==============================
 # 1️⃣ Load Data
