@@ -23,7 +23,7 @@ proteins = set(dpi['protein'])
 for p in proteins:
     G.add_node(p, type='protein')
 
-# --- Add edges ---
+
 
 # Add drug–protein edges
 for _, row in dpi.iterrows():
@@ -37,7 +37,7 @@ for pair in drug_side_effects:
     else:
         print(f"Skipping invalid pair: {pair}")
 
-# --- Visualization ---
+
 
 # Separate node types
 drug_nodes = [n for n, attr in G.nodes(data=True) if attr['type'] == 'drug']
@@ -57,10 +57,8 @@ dpi_edges = [(u, v) for u, v, e in G.edges(data=True) if e['type'] == 'drug-prot
 nx.draw_networkx_edges(G, pos, edgelist=side_effect_edges, edge_color='red', style='solid', width=2, label='Presence of side effect')
 nx.draw_networkx_edges(G, pos, edgelist=dpi_edges, edge_color='gray', style='dashed', label='Drug–Protein interaction')
 
-# Draw labels
 nx.draw_networkx_labels(G, pos, font_size=8)
 
-# Final touches
 plt.legend()
 plt.title("Drug–Drug Side Effects and Drug–Protein Interactions")
 plt.axis("off")

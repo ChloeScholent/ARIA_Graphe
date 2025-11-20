@@ -2,16 +2,16 @@ import csv
 import networkx as nx
 import matplotlib.pyplot as plt
 
-# === File paths ===
+
 combo_path = "csv/bio-decagon-combo.csv"
-drug_protein_path = "csv/fever_hyperT_drug_protein.csv"  # ← the one you extracted earlier
+drug_protein_path = "csv/fever_hyperT_drug_protein.csv"  
 ppi_path = "csv/bio-decagon-ppi.csv"
 
-# === UMLS codes ===
+
 FEVER_CODE = "C0018621"
 HYPERTENSION_CODE = "C0020542"
 
-# === STEP 1: Load drug–drug pairs that have both side effects ===
+# Drug-drug pair both side effetcs
 pair_to_effects = {}
 with open(combo_path, newline='') as f:
     reader = csv.DictReader(f)
@@ -32,7 +32,7 @@ drug_list = sorted(set([d for pair in selected_pairs for d in pair]))
 print(f"✅ {len(selected_pairs)} drug pairs with both fever and hypertension.")
 print(f"✅ {len(drug_list)} unique drugs involved.")
 
-# === STEP 2: Load drug–protein interactions from your extracted CSV ===
+# rug–protein interactions
 drug_proteins = []
 with open(drug_protein_path, newline='') as f:
     reader = csv.DictReader(f)
@@ -42,7 +42,7 @@ with open(drug_protein_path, newline='') as f:
         if drug in drug_list:
             drug_proteins.append((drug, protein))
 
-# === STEP 3: Load protein–protein interactions (PPI) ===
+# protein–protein interactions
 ppi_edges = []
 with open(ppi_path, newline='') as f:
     reader = csv.DictReader(f)
@@ -51,7 +51,7 @@ with open(ppi_path, newline='') as f:
         p2 = str(row["Protein 2"]) if "Protein 2" in row else str(list(row.values())[1])
         ppi_edges.append((p1, p2))
 
-# === STEP 4: Build the heterogeneous graph ===
+# Build graph
 G = nx.Graph()
 
 # Add drug nodes
@@ -75,18 +75,18 @@ for p1, p2 in ppi_edges:
 
 print(f"✅ Graph built: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
 
-# === STEP 5: Visualize ===
+
+
 plt.figure(figsize=(12, 10))
 pos = nx.spring_layout(G, k=0.3, seed=42)
 
-# Node coloring by type
 drug_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "drug"]
 protein_nodes = [n for n, attr in G.nodes(data=True) if attr["type"] == "protein"]
 
 nx.draw_networkx_nodes(G, pos, nodelist=drug_nodes, node_color="skyblue", label="Drugs", node_size=300)
 nx.draw_networkx_nodes(G, pos, nodelist=protein_nodes, node_color="lightgreen", label="Proteins", node_size=200)
 
-# Edge colors by type
+
 edge_colors = []
 for u, v, data in G.edges(data=True):
     if data["type"] == "drug_drug":

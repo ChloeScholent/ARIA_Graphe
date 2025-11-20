@@ -3,33 +3,21 @@ import networkx as nx
 import os
 from itertools import combinations
 
-# ============================================================
-# --- File Paths ---
-# ============================================================
-drug_dir = "csv/random_drug_sets_80"     # Folder with your 15 random_80_drugs_set_X.csv
+drug_dir = "csv/random_drug_sets_80"     
 drug_drug_file = "csv/bio-decagon-combo.csv"
 ppi_file = "csv/bio-decagon-ppi.csv"
 output_summary = "csv/drug_set_stats_summary.csv"
 
-# ============================================================
-# --- Load Shared Data ---
-# ============================================================
 print("Loading large CSVs...")
 
-drug_drug_df = pd.read_csv(drug_drug_file)  # STITCH 1, STITCH 2, Polypharmacy Side Effect
-ppi_df = pd.read_csv(ppi_file)              # Gene 1, Gene 2, interaction_score
+drug_drug_df = pd.read_csv(drug_drug_file)  
+ppi_df = pd.read_csv(ppi_file)             
 
-# Convert PPI into a quick lookup set
+# Convert PPI into quick lookup set
 ppi_edges = {(min(u, v), max(u, v)) for u, v in zip(ppi_df['Gene 1'], ppi_df['Gene 2'])}
 
-# ============================================================
-# --- Prepare Output Storage ---
-# ============================================================
 results_summary = []
 
-# ============================================================
-# --- Iterate Over Each Drug Subset File ---
-# ============================================================
 for file in sorted(os.listdir(drug_dir)):
     if not file.endswith(".csv"):
         continue
@@ -51,7 +39,7 @@ for file in sorted(os.listdir(drug_dir)):
         drug_drug_df['STITCH 2'].isin(drug_set)
     ]
 
-    # Map each drug → its protein targets
+    # Map each drug  / protein targets
     drug_to_proteins = {
         drug: set(drug_protein_df.loc[drug_protein_df['STITCH'] == drug, 'Gene'])
         for drug in drugs
@@ -60,31 +48,30 @@ for file in sorted(os.listdir(drug_dir)):
     # Compute all possible pairs
     all_pairs = set(tuple(sorted(pair)) for pair in combinations(drugs, 2))
 
-    # Known side-effect pairs
+
     side_effect_pairs = set(tuple(sorted((row['STITCH 1'], row['STITCH 2'])))
                             for _, row in filtered_dd.iterrows())
 
-    # No-side-effect pairs
     no_side_effect_pairs = all_pairs - side_effect_pairs
 
-    # Stats containers
+
     side_effect_stats = []
     no_side_effect_stats = []
 
-    # --- Compute for side-effect pairs ---
+
     for d1, d2 in side_effect_pairs:
         proteins_u = drug_to_proteins.get(d1, set())
         proteins_v = drug_to_proteins.get(d2, set())
         shared_proteins = proteins_u & proteins_v
         num_shared = len(shared_proteins)
-        # PPI count between targets
+
         num_ppi_links = sum(
             (min(p1, p2), max(p1, p2)) in ppi_edges
             for p1 in proteins_u for p2 in proteins_v
         )
         side_effect_stats.append((num_shared, num_ppi_links))
 
-    # --- Compute for no-side-effect pairs ---
+
     for d1, d2 in no_side_effect_pairs:
         proteins_u = drug_to_proteins.get(d1, set())
         proteins_v = drug_to_proteins.get(d2, set())
@@ -115,9 +102,7 @@ for file in sorted(os.listdir(drug_dir)):
         "avg_ppi_no_side_effect": avg_ppi_none
     })
 
-# ============================================================
-# --- Save Summary ---
-# ============================================================
+
 summary_df = pd.DataFrame(results_summary)
 summary_df.to_csv(output_summary, index=False)
 

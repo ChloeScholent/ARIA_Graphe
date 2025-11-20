@@ -2,9 +2,6 @@ import networkx as nx
 import random
 import itertools
 
-# ---------------------
-# 1. Graph generation
-# ---------------------
 num_drugs = 1774
 num_proteins = 19081
 
@@ -30,7 +27,6 @@ for i in range(num_proteins):
 drugs = [n for n, d in G.nodes(data=True) if d["type"] == "drug"]
 proteins = [n for n, d in G.nodes(data=True) if d["type"] == "protein"]
 
-# Helper function to add random edges safely
 def add_random_edges(G, nodes_a, nodes_b, edge_type, num_edges, allow_same_set=False):
     possible_edges = (
         list(itertools.combinations(nodes_a, 2)) if allow_same_set
@@ -46,14 +42,11 @@ def add_random_edges(G, nodes_a, nodes_b, edge_type, num_edges, allow_same_set=F
         G.add_edge(edge[0], edge[1], type=edge_type)
         added += 1
 
-# Add edges
 add_random_edges(G, drugs, drugs, "drug_drug", num_drug_drug_edges, allow_same_set=True)
 add_random_edges(G, drugs, proteins, "drug_protein", num_drug_protein_edges)
 add_random_edges(G, proteins, proteins, "protein_protein", num_protein_protein_edges, allow_same_set=True)
 
-# ---------------------
-# 2. Compute metrics
-# ---------------------
+
 
 # Map drug → connected proteins
 drug_to_proteins = {
@@ -66,14 +59,14 @@ linked_drug_pairs = [
     if G.has_edge(d1, d2) and G.edges[d1, d2]["type"] == "drug_drug"
 ]
 
-# --- Metric 1: Average shared proteins between linked drugs ---
+# Average shared proteins between linked drugs 
 shared_counts = []
 for d1, d2 in linked_drug_pairs:
     shared = len(drug_to_proteins[d1].intersection(drug_to_proteins[d2]))
     shared_counts.append(shared)
 avg_shared_linked = sum(shared_counts) / len(shared_counts) if shared_counts else 0
 
-# --- Metric 2: Average PPI between linked drugs ---
+# Metric 2: Average PPI between linked drugs
 ppi_counts = []
 for d1, d2 in linked_drug_pairs:
     ppi_count = 0
@@ -84,16 +77,14 @@ for d1, d2 in linked_drug_pairs:
     ppi_counts.append(ppi_count)
 avg_ppi_linked = sum(ppi_counts) / len(ppi_counts) if ppi_counts else 0
 
-# --- Network-level stats ---
+# Network-level stats
 density = nx.density(G)
 degrees = dict(G.degree())
 avg_degree = sum(degrees.values()) / len(degrees)
 max_degree = max(degrees.values())
 min_degree = min(degrees.values())
 
-# ---------------------
-# 3. Print results
-# ---------------------
+
 print("=== Graph Statistics ===")
 print(f"Number of nodes: {G.number_of_nodes()}")
 print(f"Number of edges: {G.number_of_edges()}")
