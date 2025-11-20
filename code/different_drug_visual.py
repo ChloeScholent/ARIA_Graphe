@@ -12,7 +12,6 @@ drug_side_effects = diff_drug_pair
 # Initialize graph
 G = nx.Graph()
 
-# --- Add nodes ---
 
 # Add drug nodes
 drugs = set(dpi['drug']).union({d for pair in drug_side_effects for d in pair})
